@@ -3,6 +3,8 @@ import chess
 import chess.pgn
 import openai
 
+client = openai.OpenAI()
+
 def get_legal_moves(board):
     """Returns a list of legal moves in UCI notation."""
     return list(map(board.san, board.legal_moves))
@@ -40,21 +42,19 @@ def generate_prompt(game: chess.pgn.Game, board: chess.Board) -> str:
 
 def get_move_from_prompt(prompt: str) -> tuple[str,str]:
     """Returns the move from the prompt."""
-    response = openai.ChatCompletion.create(
-      model="gpt-3.5-turbo",
-      messages=[
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": prompt},
-        ]
-    )
-    content = response['choices'][0]['message']['content']
+    response = client.chat.completions.create(model="gpt-4-0125-preview",
+    messages=[
+          {"role": "system", "content": "You are a helpful assistant."},
+          {"role": "user", "content": prompt},
+      ])
+    content = response.choices[0].message.content
     lines = content.splitlines()
     mv, explanation = None, None
     for line in lines:
         if line.startswith("Move:"):
           mv = line[6:]
         if line.startswith("Explanation:"):
-          explanation = line[14:]         
+          explanation = line[14:]
     return mv, explanation
 
 game, board = init_game()
